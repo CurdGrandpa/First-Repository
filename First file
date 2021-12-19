@@ -1,0 +1,111 @@
+using System;
+using System.IO;
+using System.Collections.Generic;
+
+namespace WordsCounter
+{
+    class Word
+    {
+        public string name;
+        public int rep;
+
+        public Word(string n) { name = n; rep = 1; }
+        public Word(string n, int r) { name = n; rep = r; }
+    }
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            string path = @"C:\WordsCounter";
+            string counterPath = @"C:\WordsCounter\Words counter.txt";
+            Console.WriteLine(path);
+
+            if (Directory.Exists(path))
+            {
+                while (true)
+                {
+                    Console.WriteLine("Файлы: ");
+                    string[] files = Directory.GetFiles(path);
+                    foreach (string s in files)
+                    {
+                        Console.WriteLine(s);
+                    }
+                    Console.WriteLine();
+
+                    Console.Write("С каким файлом Вы хотите работать? ");
+                    string temp = "\\" + Console.ReadLine();
+                    if (File.Exists(path + temp))
+                    {
+                        path += temp;
+                        break;
+                    }
+                    else
+                    {
+                        Console.Write("Указанного файла не существует. Проверьте корректность введённых данных.");
+                    }
+                }
+
+            }
+
+            FileInfo fileInf = new FileInfo(path);
+            if (fileInf.Exists)
+            {
+                Console.WriteLine("Имя файла: {0}", fileInf.Name);
+                Console.WriteLine("Время создания: {0}", fileInf.CreationTime);
+                Console.WriteLine("Размер: {0}", fileInf.Length);
+            }
+            List<Word> words = new List<Word>();
+
+            try
+            {
+                using (StreamReader counterReader = new StreamReader(File.Open(counterPath, FileMode.Open)))
+                {
+                    while (!counterReader.EndOfStream)
+                    {
+                        string line = counterReader.ReadLine();
+                        string[] _name = line.Split(' ');
+                        words.Add(new Word(_name[0], Convert.ToInt32(_name[1])));
+                    }
+                }
+                using (StreamReader reader = new StreamReader(File.Open(path, FileMode.Open)))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        string[] _name = line.Split(' ');
+                        foreach (String _n in _name)
+                        {
+                            string n = _n.ToLower().Trim(new Char[] { ' ', '*', '.', '!', ',', '?', ':', ';' });
+                            bool newWord = true;
+
+                            foreach (Word w in words)
+                            {
+                                if (w.name == n)
+                                {
+                                    newWord = false;
+                                    var index = words.FindIndex(x => x.name == n);
+                                    words[index].rep++;
+                                }
+                            }
+                            if (newWord) words.Add(new Word(n));
+                        }
+                    }
+                }
+
+                using (StreamWriter counterWriter = new StreamWriter(counterPath, false, System.Text.Encoding.Default))
+                {
+                    foreach (Word w in words)
+                    {
+                        counterWriter.Write(w.name + " ");
+                        counterWriter.WriteLine(w.rep);
+                    }
+                }
+                Console.WriteLine("Запись выполнена");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+    }
+}
